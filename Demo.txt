@@ -18,7 +18,7 @@ gui.ResetOnSpawn = false
 
 -- Tạo khung chính (ban đầu ẩn)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 350) -- Tăng chiều cao để thêm phần webhook
+frame.Size = UDim2.new(0, 250, 0, 350)
 frame.Position = UDim2.new(0.5, -125, 0.5, -175)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
@@ -279,6 +279,7 @@ local isGreggFarmOn = false
 local isHoldSkillsOn = false
 local isBonusBossOn = false
 local webhookUrl = ""
+local collectedItems = 0 -- Đếm số vật phẩm nhặt được
 
 -- Hàm kéo thả
 local function makeDraggable(element)
@@ -341,6 +342,7 @@ local function sendDiscordNotification()
     local gold = player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Gold") and player.leaderstats.Gold.Value or 0
     local level = player:FindFirstChild("Level") and player.Level.Value or 0
     local xp = player:FindFirstChild("XP") and player.XP.Value or 0
+    local dungeonName = player:FindFirstChild("CurrentDungeon") and player.CurrentDungeon.Value or "Unknown"
 
     -- Định dạng thông báo
     local message = {
@@ -350,8 +352,13 @@ local function sendDiscordNotification()
             ["color"] = 3447003,
             ["fields"] = {
                 {
-                    ["name"] = "Player Info",
+                    ["name"] = "Player",
                     ["value"] = playerName,
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "Dungeon",
+                    ["value"] = dungeonName,
                     ["inline"] = true
                 },
                 {
@@ -368,6 +375,11 @@ local function sendDiscordNotification()
                     ["name"] = "XP",
                     ["value"] = tostring(xp),
                     ["inline"] = true
+                },
+                {
+                    ["name"] = "Items Collected",
+                    ["value"] = tostring(collectedItems),
+                    ["inline"] = true
                 }
             },
             ["footer"] = {
@@ -383,6 +395,7 @@ local function sendDiscordNotification()
 
     if success then
         print("Đã gửi thông báo đến Discord!")
+        collectedItems = 0 -- Reset số vật phẩm sau khi gửi
     else
         print("Lỗi khi gửi thông báo đến Discord: " .. err)
     end
@@ -391,12 +404,11 @@ end
 -- Phát hiện khi trận đấu hoàn thành
 local function detectMatchEnd()
     while true do
-        -- Kiểm tra GUI phần thưởng
-        local rewardGui = player.PlayerGui:FindFirstChild("RewardGui") -- Tên GUI có thể khác, cần kiểm tra trong game
+        local rewardGui = player.PlayerGui:FindFirstChild("RewardGui")
         if rewardGui and rewardGui.Visible then
             print("Trận đấu đã hoàn thành! Gửi thông báo đến Discord...")
             sendDiscordNotification()
-            wait(5) -- Chờ 5 giây để tránh gửi nhiều thông báo
+            wait(5)
         end
         wait(1)
     end
@@ -404,19 +416,57 @@ end
 
 spawn(detectMatchEnd)
 
+-- Tự động nhặt vật phẩm
+local function autoCollectItems()
+    while true do
+        for _, item in pairs(workspace:GetChildren()) do
+            if item:FindFirstChild("ClickDetector") and item.Name:find("Drop") then
+                local distance = (rootPart.Position - item.Position).Magnitude
+                if distance <= 20 then
+                    fireclickdetector(item.ClickDetector)
+                    collectedItems = collectedItems + 1
+                    print("Đã nhặt vật phẩm! Tổng số: " .. collectedItems)
+                end
+            end
+        end
+        wait(0.5)
+    end
+end
+
+spawn(autoCollectItems)
+
 -- 1. Auto Dungeon (Thanh trượt)
 local function autoDungeonLogic()
     if not isAutoDungeonSliderOn then return end
-    local playerLevel = player:FindFirstChild("Level") and player.Level.Value or 215
-    local dungeonName = "Abyssal Void"
-    if playerLevel < 215 then
+    local playerLevel = player:FindFirstChild("Level") and player.Level.Value or 1
+    local dungeonName, difficulty
+
+    -- Chọn dungeon dựa trên level
+    if playerLevel >= 215 then
+        dungeonName = "Abyssal Void"
+        difficulty = "Nightmare"
+    elseif playerLevel >= 27 then
+        dungeonName = "Winter Outpost"
+        difficulty = "Nightmare"
+    elseif playerLevel >= 15 then
         dungeonName = "Desert Temple"
+        difficulty = "Hard"
+    elseif playerLevel >= 5 then
+        dungeonName = "Desert Temple"
+        difficulty = "Medium"
+    else
+        dungeonName = "Desert Temple"
+        difficulty = "Easy"
     end
 
     local dungeonEvent = replicatedStorage:FindFirstChild("DungeonJoin")
     if dungeonEvent then
-        dungeonEvent:FireServer(dungeonName, "Nightmare")
-        print("Đã tự động vào " .. dungeonName .. " (Nightmare)!")
+        -- Kiểm tra xem có đang trong dungeon không
+        if not player:FindFirstChild("InDungeon") or not player.InDungeon.Value then
+            dungeonEvent:FireServer(dungeonName, difficulty)
+            print("Đã tự động vào " .. dungeonName .. " (" .. difficulty .. ")!")
+            wait(15) -- Chờ 15 giây để tránh spam
+        end
     else
         print("Không tìm thấy RemoteEvent để vào hầm ngục!")
     end
@@ -427,11 +477,27 @@ autoDungeonSlider.MouseButton1Click:Connect(function()
     autoDungeonSlider.Text = isAutoDungeonSliderOn and "ON" or "OFF"
     autoDungeonSlider.BackgroundColor3 = isAutoDungeonSliderOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 120, 255)
     if isAutoDungeonSliderOn then
-        autoDungeonLogic()
+        spawn(autoDungeonLogic)
+        print("Đã bật Auto Dungeon (thanh trượt)!")
+    else
+        print("Đã tắt Auto Dungeon (thanh trượt)!")
     end
 end)
 
 -- 2. Autostats (Lựa chọn)
+local function autostatsLogic()
+    while autostatsMode ~= "None" do
+        local statsEvent = replicatedStorage:FindFirstChild("UpgradeStat")
+        if statsEvent then
+            statsEvent:FireServer(autostatsMode)
+            print("Đã nâng " .. autostatsMode .. "!")
+        else
+            print("Không tìm thấy RemoteEvent để nâng stats!")
+        end
+        wait(0.5)
+    end
+end
+
 autostatsButton.MouseButton1Click:Connect(function()
     autostatsFrame.Visible = not autostatsFrame.Visible
 end)
@@ -441,6 +507,7 @@ physicalOption.MouseButton1Click:Connect(function()
     autostatsButton.Text = "Autostats: Physical"
     autostatsFrame.Visible = false
     print("Đã chọn Autostats: Physical")
+    spawn(autostatsLogic)
 end)
 
 spellOption.MouseButton1Click:Connect(function()
@@ -448,6 +515,7 @@ spellOption.MouseButton1Click:Connect(function()
     autostatsButton.Text = "Autostats: Spell"
     autostatsFrame.Visible = false
     print("Đã chọn Autostats: Spell")
+    spawn(autostatsLogic)
 end)
 
 staminaOption.MouseButton1Click:Connect(function()
@@ -455,6 +523,7 @@ staminaOption.MouseButton1Click:Connect(function()
     autostatsButton.Text = "Autostats: Stamina"
     autostatsFrame.Visible = false
     print("Đã chọn Autostats: Stamina")
+    spawn(autostatsLogic)
 end)
 
 -- 3. Disable Render
@@ -464,10 +533,20 @@ disableRenderButton.MouseButton1Click:Connect(function()
     if isDisableRenderOn then
         game.Lighting.Brightness = 0
         game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 1
+            end
+        end
         print("Đã tắt render để giảm lag!")
     else
         game.Lighting.Brightness = 1
         game.Lighting.Ambient = Color3.fromRGB(127, 127, 127)
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 0
+            end
+        end
         print("Đã bật lại render!")
     end
 end)
@@ -493,7 +572,7 @@ local function bypassCooldown()
         for _, v in pairs(getgc(true)) do
             if type(v) == "table" then
                 for key, value in pairs(v) do
-                    if (key:lower():find("cooldown") or key:lower():find("skill")) and value == 3 then
+                    if (key:lower():find("cooldown") or key:lower():find("skill")) and type(value) == "number" then
                         rawset(v, key, 0)
                         print("Đã đặt " .. key .. " về 0!")
                     end
@@ -503,7 +582,7 @@ local function bypassCooldown()
     end)
 
     if success then
-        print("Đã bypass cooldown cho tất cả skill có cooldown 3 giây!")
+        print("Đã bypass cooldown cho tất cả skill!")
     else
         print("Lỗi khi bypass cooldown: " .. err)
     end
@@ -513,7 +592,7 @@ local function bypassCooldown()
             if type(func) == "function" and islclosure(func) then
                 local constants = getconstants(func)
                 for _, const in pairs(constants) do
-                    if const == "Cooldown" or const == "cooldown" or const == 3 then
+                    if const == "Cooldown" or const == "cooldown" then
                         hookfunction(func, function(...)
                             return true
                         end)
@@ -536,11 +615,10 @@ local function useSkill()
         local skillKeys = {"Q", "E", "One", "Two", "Three", "Four"}
         for _, key in pairs(skillKeys) do
             virtualInputManager:SendKeyEvent(true, key, false, game)
-        end
-        runService.Heartbeat:Wait()
-        for _, key in pairs(skillKeys) do
+            wait(0.01)
             virtualInputManager:SendKeyEvent(false, key, false, game)
         end
+        runService.Heartbeat:Wait()
     end
 end
 
@@ -550,16 +628,27 @@ useSkillButton.MouseButton1Click:Connect(function()
     if isUseSkillOn then
         spawn(useSkill)
         print("Đang spam tất cả skill với cooldown bypass!")
+    else
+        print("Đã tắt Use Skill!")
     end
 end)
 
 -- 5. Gregg Farm
 local function greggFarmLogic()
     while isGreggFarmOn do
-        local gregg = workspace:FindFirstChild("Gregg")
-        if gregg and gregg:FindFirstChild("HumanoidRootPart") then
+        local gregg = nil
+        for _, enemy in pairs(workspace:GetChildren()) do
+            if enemy.Name == "Gregg" and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                gregg = enemy
+                break
+            end
+        end
+        if gregg then
             rootPart.CFrame = gregg.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-            print("Đang đánh Gregg!")
+            print("Đang farm Gregg!")
+            virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            wait(0.01)
+            virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
         end
         runService.Heartbeat:Wait()
     end
@@ -570,6 +659,9 @@ greggFarmButton.MouseButton1Click:Connect(function()
     greggFarmButton.Text = "Gregg Farm: " .. (isGreggFarmOn and "ON" or "OFF")
     if isGreggFarmOn then
         spawn(greggFarmLogic)
+        print("Đã bật Gregg Farm!")
+    else
+        print("Đã tắt Gregg Farm!")
     end
 end)
 
@@ -581,9 +673,9 @@ local function holdSkills()
             virtualInputManager:SendKeyEvent(true, key, false, game)
         end
         runService.Heartbeat:Wait()
-        for _, key in pairs(skillKeys) do
-            virtualInputManager:SendKeyEvent(false, key, false, game)
-        end
+    end
+    for _, key in pairs({"Q", "E", "One", "Two", "Three", "Four"}) do
+        virtualInputManager:SendKeyEvent(false, key, false, game)
     end
 end
 
@@ -592,16 +684,22 @@ holdSkillsButton.MouseButton1Click:Connect(function()
     holdSkillsButton.Text = "Hold Skills: " .. (isHoldSkillsOn and "ON" or "OFF")
     if isHoldSkillsOn then
         spawn(holdSkills)
+        print("Đã bật Hold Skills!")
+    else
+        print("Đã tắt Hold Skills!")
     end
 end)
 
 -- 7. Bonus Boss
 local function bonusBossLogic()
     while isBonusBossOn do
-        local bonusBossButton = workspace:FindFirstChild("BonusBossButton")
-        if bonusBossButton then
-            fireclickdetector(bonusBossButton:FindFirstChildOfClass("ClickDetector"))
-            print("Đã kích hoạt Bonus Boss!")
+        for _, obj in pairs(workspace:GetChildren()) do
+            if obj.Name == "BonusBossButton" and obj:FindFirstChildOfClass("ClickDetector") then
+                fireclickdetector(obj:FindFirstChildOfClass("ClickDetector"))
+                print("Đã kích hoạt Bonus Boss!")
+                wait(5)
+                break
+            end
         end
         wait(1)
     end
@@ -612,6 +710,9 @@ bonusBossButton.MouseButton1Click:Connect(function()
     bonusBossButton.Text = "Bonus Boss: " .. (isBonusBossOn and "ON" or "OFF")
     if isBonusBossOn then
         spawn(bonusBossLogic)
+        print("Đã bật Bonus Boss!")
+    else
+        print("Đã tắt Bonus Boss!")
     end
 end)
 
@@ -622,8 +723,9 @@ local function autoRetry()
         if retryButton and retryButton.Visible then
             fireclickdetector(retryButton:FindFirstChildOfClass("ClickDetector"))
             print("Đã tự động retry!")
+            wait(2)
         end
-        wait(1)
+        wait(0.5)
     end
 end
 
@@ -635,6 +737,10 @@ resetButton.MouseButton1Click:Connect(function()
     humanoid.JumpPower = 0
     humanoid:TakeDamage(humanoid.MaxHealth)
     print("Đã reset nhân vật!")
+    wait(1)
+    character = player.Character or player.CharacterAdded:Wait()
+    humanoid = character:WaitForChild("Humanoid")
+    rootPart = character:WaitForChild("HumanoidRootPart")
 end)
 
 -- 10. Autofarm (Tối ưu hóa)
@@ -646,7 +752,7 @@ local function findNearestEnemy()
         local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
         if enemyHumanoid and enemyRoot and enemy ~= character and enemyHumanoid.Health > 0 then
             local distance = (rootPart.Position - enemyRoot.Position).Magnitude
-            if distance < shortestDistance then
+            if distance < shortestDistance and distance <= 50 then
                 nearestEnemy = enemyRoot
                 shortestDistance = distance
             end
@@ -659,7 +765,7 @@ local function isSafePosition(position)
     for _, area in pairs(workspace:GetChildren()) do
         if area.Name == "DangerArea" and area:IsA("BasePart") then
             local distance = (position - area.Position).Magnitude
-            if distance < area.Size.Magnitude then
+            if distance < (area.Size.Magnitude + 5) then
                 return false
             end
         end
@@ -669,50 +775,51 @@ end
 
 local function findSafePosition()
     local basePos = rootPart.Position
-    for i = 1, 10 do
-        local testPos = basePos + Vector3.new(math.random(-20, 20), 0, math.random(-20, 20))
+    for i = 1, 15 do
+        local testPos = basePos + Vector3.new(math.random(-30, 30), 0, math.random(-30, 30))
         if isSafePosition(testPos) then
             return testPos
         end
     end
-    return basePos
+    return basePos + Vector3.new(0, 10, 0)
 end
 
 local function autofarmLogic()
     while isAutofarmOn do
+        if humanoid.Health <= 0 then
+            wait(1)
+            character = player.Character or player.CharacterAdded:Wait()
+            humanoid = character:WaitForChild("Humanoid")
+            rootPart = character:WaitForChild("HumanoidRootPart")
+        end
+
         local target = findNearestEnemy()
         if target then
-            -- Né vùng nguy hiểm
-            for _, area in pairs(workspace:GetChildren()) do
-                if area.Name == "DangerArea" and area:IsA("BasePart") then
-                    local distance = (rootPart.Position - area.Position).Magnitude
-                    if distance < area.Size.Magnitude then
-                        local safePos = findSafePosition()
-                        rootPart.CFrame = CFrame.new(safePos)
-                        print("Đã né vùng nguy hiểm!")
-                    end
-                end
+            if not isSafePosition(rootPart.Position) then
+                local safePos = findSafePosition()
+                rootPart.CFrame = CFrame.new(safePos)
+                print("Đã né vùng nguy hiểm!")
+                wait(0.1)
             end
 
-            -- Dịch chuyển lên đầu quái và tấn công
             rootPart.CFrame = target.CFrame * CFrame.new(0, 5, 0)
             if isUseSkillOn then
-                                local skillKeys = {"Q", "E", "One", "Two", "Three", "Four"}
+                local skillKeys = {"Q", "E", "One", "Two", "Three", "Four"}
                 for _, key in pairs(skillKeys) do
                     virtualInputManager:SendKeyEvent(true, key, false, game)
-                end
-                runService.Heartbeat:Wait()
-                for _, key in pairs(skillKeys) do
+                    wait(0.01)
                     virtualInputManager:SendKeyEvent(false, key, false, game)
                 end
             end
-            -- Tự động tấn công nếu không dùng skill
             virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            runService.Heartbeat:Wait()
+            wait(0.01)
             virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
         else
-            -- Nếu không tìm thấy quái, chờ một chút
-            wait(0.1)
+            local randomPos = rootPart.Position + Vector3.new(math.random(-20, 20), 0, math.random(-20, 20))
+            if isSafePosition(randomPos) then
+                rootPart.CFrame = CFrame.new(randomPos)
+            end
+            wait(0.2)
         end
         runService.Heartbeat:Wait()
     end
@@ -733,7 +840,7 @@ end)
 local function autoclickWeaponLogic()
     while isAutoclickWeaponOn do
         virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        runService.Heartbeat:Wait()
+        wait(0.01)
         virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
         runService.Heartbeat:Wait()
     end
@@ -753,18 +860,23 @@ end)
 -- 12. Wavefarm
 local function wavefarmLogic()
     while isWavefarmOn do
-        -- Tìm và di chuyển đến vị trí wave
-        for _, wave in pairs(workspace:GetChildren()) do
-            if wave.Name == "Wave" and wave:IsA("BasePart") then
-                rootPart.CFrame = wave.CFrame * CFrame.new(0, 5, 0)
-                print("Đang farm tại Wave!")
+        local wave = nil
+        for _, obj in pairs(workspace:GetChildren()) do
+            if obj.Name == "Wave" and obj:IsA("BasePart") then
+                wave = obj
                 break
             end
         end
-        -- Tự động tấn công
-        virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        runService.Heartbeat:Wait()
-        virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        if wave then
+            rootPart.CFrame = wave.CFrame * CFrame.new(0, 5, 0)
+            print("Đang farm tại Wave!")
+            virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            wait(0.01)
+            virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        else
+            print("Không tìm thấy Wave để farm!")
+            wait(0.5)
+        end
         runService.Heartbeat:Wait()
     end
 end
@@ -783,21 +895,38 @@ end)
 -- 13. Auto Dungeon (Nút)
 local function autoDungeonButtonLogic()
     while isAutoDungeonButtonOn do
-        local playerLevel = player:FindFirstChild("Level") and player.Level.Value or 215
-        local dungeonName = "Abyssal Void"
-        if playerLevel < 215 then
+        local playerLevel = player:FindFirstChild("Level") and player.Level.Value or 1
+        local dungeonName, difficulty
+
+        if playerLevel >= 215 then
+            dungeonName = "Abyssal Void"
+            difficulty = "Nightmare"
+        elseif playerLevel >= 27 then
+            dungeonName = "Winter Outpost"
+            difficulty = "Nightmare"
+        elseif playerLevel >= 15 then
             dungeonName = "Desert Temple"
+            difficulty = "Hard"
+        elseif playerLevel >= 5 then
+            dungeonName = "Desert Temple"
+            difficulty = "Medium"
+        else
+            dungeonName = "Desert Temple"
+            difficulty = "Easy"
         end
 
         local dungeonEvent = replicatedStorage:FindFirstChild("DungeonJoin")
         if dungeonEvent then
-            dungeonEvent:FireServer(dungeonName, "Nightmare")
-            print("Đã tự động vào " .. dungeonName .. " (Nightmare) qua nút!")
-            wait(10) -- Chờ 10 giây trước khi thử lại
+            if not player:FindFirstChild("InDungeon") or not player.InDungeon.Value then
+                dungeonEvent:FireServer(dungeonName, difficulty)
+                print("Đã tự động vào " .. dungeonName .. " (" .. difficulty .. ") qua nút!")
+                wait(15)
+            end
         else
             print("Không tìm thấy RemoteEvent để vào hầm ngục!")
             wait(5)
         end
+        wait(1)
     end
 end
 
@@ -810,45 +939,6 @@ autoDungeonButton.MouseButton1Click:Connect(function()
     else
         print("Đã tắt Auto Dungeon (nút)!")
     end
-end)
-
--- 14. Autostats Logic
-local function autostatsLogic()
-    while autostatsMode ~= "None" do
-        local statsEvent = replicatedStorage:FindFirstChild("UpgradeStat")
-        if statsEvent then
-            statsEvent:FireServer(autostatsMode)
-            print("Đã nâng " .. autostatsMode .. "!")
-        else
-            print("Không tìm thấy RemoteEvent để nâng stats!")
-        end
-        wait(1)
-    end
-end
-
--- Kích hoạt Autostats khi chọn
-physicalOption.MouseButton1Click:Connect(function()
-    autostatsMode = "Physical"
-    autostatsButton.Text = "Autostats: Physical"
-    autostatsFrame.Visible = false
-    print("Đã chọn Autostats: Physical")
-    spawn(autostatsLogic)
-end)
-
-spellOption.MouseButton1Click:Connect(function()
-    autostatsMode = "Spell"
-    autostatsButton.Text = "Autostats: Spell"
-    autostatsFrame.Visible = false
-    print("Đã chọn Autostats: Spell")
-    spawn(autostatsLogic)
-end)
-
-staminaOption.MouseButton1Click:Connect(function()
-    autostatsMode = "Stamina"
-    autostatsButton.Text = "Autostats: Stamina"
-    autostatsFrame.Visible = false
-    print("Đã chọn Autostats: Stamina")
-    spawn(autostatsLogic)
 end)
 
 -- Thông báo khi script khởi động
