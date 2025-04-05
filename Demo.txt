@@ -1,4 +1,4 @@
--- Script tối ưu cho Dungeon Quest với Krnl, thêm Discord Webhook
+-- Script tối ưu cho Dungeon Quest với Krnl, thêm né chiêu của quái
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -16,10 +16,64 @@ gui.Name = "KinayoScriptUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
 
+-- Tạo khung nhập key (hiển thị đầu tiên)
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.new(0, 200, 0, 100)
+keyFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
+keyFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+keyFrame.BorderSizePixel = 0
+keyFrame.Parent = gui
+keyFrame.Visible = true
+
+-- Tiêu đề khung nhập key
+local keyTitle = Instance.new("TextLabel")
+keyTitle.Size = UDim2.new(1, 0, 0, 25)
+keyTitle.Position = UDim2.new(0, 0, 0, 0)
+keyTitle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+keyTitle.Text = "Enter Key"
+keyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyTitle.TextScaled = true
+keyTitle.TextSize = 14
+keyTitle.Parent = keyFrame
+
+-- Ô nhập key
+local keyInput = Instance.new("TextBox")
+keyInput.Size = UDim2.new(0, 180, 0, 25)
+keyInput.Position = UDim2.new(0, 10, 0, 35)
+keyInput.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+keyInput.Text = "Enter key here"
+keyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyInput.TextScaled = true
+keyInput.TextSize = 14
+keyInput.Parent = keyFrame
+
+-- Nút xác nhận key
+local keySubmitButton = Instance.new("TextButton")
+keySubmitButton.Size = UDim2.new(0, 180, 0, 25)
+keySubmitButton.Position = UDim2.new(0, 10, 0, 65)
+keySubmitButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+keySubmitButton.Text = "Submit Key"
+keySubmitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+keySubmitButton.TextScaled = true
+keySubmitButton.TextSize = 14
+keySubmitButton.Parent = keyFrame
+
+-- Thông báo key
+local keyNotification = Instance.new("TextLabel")
+keyNotification.Size = UDim2.new(0, 200, 0, 30)
+keyNotification.Position = UDim2.new(1, -210, 1, -40)
+keyNotification.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+keyNotification.Text = ""
+keyNotification.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyNotification.TextScaled = true
+keyNotification.TextSize = 14
+keyNotification.Visible = false
+keyNotification.Parent = gui
+
 -- Tạo khung chính (ban đầu ẩn)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 350)
-frame.Position = UDim2.new(0.5, -125, 0.5, -175)
+frame.Size = UDim2.new(0, 250, 0, 200)
+frame.Position = UDim2.new(0.5, -125, 0.5, -100)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
 frame.Parent = gui
@@ -36,6 +90,7 @@ logoButton.TextScaled = true
 logoButton.BorderSizePixel = 0
 logoButton.BackgroundTransparency = 0.2
 logoButton.Parent = gui
+logoButton.Visible = false
 
 -- Làm tròn logo
 local logoCorner = Instance.new("UICorner")
@@ -53,42 +108,10 @@ title.TextScaled = true
 title.TextSize = 14
 title.Parent = frame
 
--- Nút Reset (reset nhân vật)
-local resetButton = Instance.new("TextButton")
-resetButton.Size = UDim2.new(0, 50, 0, 25)
-resetButton.Position = UDim2.new(1, -55, 0, 0)
-resetButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-resetButton.Text = "RESET"
-resetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetButton.TextScaled = true
-resetButton.TextSize = 14
-resetButton.Parent = frame
-
--- Thanh trượt Auto Dungeon
-local autoDungeonLabel = Instance.new("TextLabel")
-autoDungeonLabel.Size = UDim2.new(0, 80, 0, 20)
-autoDungeonLabel.Position = UDim2.new(0, 10, 0, 35)
-autoDungeonLabel.BackgroundTransparency = 1
-autoDungeonLabel.Text = "Auto Dungeon"
-autoDungeonLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoDungeonLabel.TextScaled = true
-autoDungeonLabel.TextSize = 14
-autoDungeonLabel.Parent = frame
-
-local autoDungeonSlider = Instance.new("TextButton")
-autoDungeonSlider.Size = UDim2.new(0, 130, 0, 15)
-autoDungeonSlider.Position = UDim2.new(0, 100, 0, 38)
-autoDungeonSlider.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-autoDungeonSlider.Text = "OFF"
-autoDungeonSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoDungeonSlider.TextScaled = true
-autoDungeonSlider.TextSize = 12
-autoDungeonSlider.Parent = frame
-
 -- Nút Autofarm
 local autofarmButton = Instance.new("TextButton")
 autofarmButton.Size = UDim2.new(0, 110, 0, 25)
-autofarmButton.Position = UDim2.new(0, 10, 0, 65)
+autofarmButton.Position = UDim2.new(0, 10, 0, 35)
 autofarmButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 autofarmButton.Text = "Autofarm: OFF"
 autofarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -96,82 +119,10 @@ autofarmButton.TextScaled = true
 autofarmButton.TextSize = 14
 autofarmButton.Parent = frame
 
--- Nút Autoclick Weapon
-local autoclickWeaponButton = Instance.new("TextButton")
-autoclickWeaponButton.Size = UDim2.new(0, 110, 0, 25)
-autoclickWeaponButton.Position = UDim2.new(0, 130, 0, 65)
-autoclickWeaponButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-autoclickWeaponButton.Text = "Autoclick Weapon: OFF"
-autoclickWeaponButton.TextScaled = true
-autoclickWeaponButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoclickWeaponButton.TextSize = 14
-autoclickWeaponButton.Parent = frame
-
--- Nút Wavefarm
-local wavefarmButton = Instance.new("TextButton")
-wavefarmButton.Size = UDim2.new(0, 110, 0, 25)
-wavefarmButton.Position = UDim2.new(0, 10, 0, 95)
-wavefarmButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-wavefarmButton.Text = "Wavefarm: OFF"
-wavefarmButton.TextScaled = true
-wavefarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-wavefarmButton.TextSize = 14
-wavefarmButton.Parent = frame
-
--- Nút Autostats (dạng lựa chọn)
-local autostatsButton = Instance.new("TextButton")
-autostatsButton.Size = UDim2.new(0, 110, 0, 25)
-autostatsButton.Position = UDim2.new(0, 130, 0, 95)
-autostatsButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-autostatsButton.Text = "Autostats: None"
-autostatsButton.TextScaled = true
-autostatsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-autostatsButton.TextSize = 14
-autostatsButton.Parent = frame
-
--- Khung lựa chọn cho Autostats (ban đầu ẩn)
-local autostatsFrame = Instance.new("Frame")
-autostatsFrame.Size = UDim2.new(0, 110, 0, 75)
-autostatsFrame.Position = UDim2.new(0, 130, 0, 120)
-autostatsFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-autostatsFrame.BorderSizePixel = 0
-autostatsFrame.Visible = false
-autostatsFrame.Parent = frame
-
-local physicalOption = Instance.new("TextButton")
-physicalOption.Size = UDim2.new(1, 0, 0, 25)
-physicalOption.Position = UDim2.new(0, 0, 0, 0)
-physicalOption.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-physicalOption.Text = "Physical"
-physicalOption.TextColor3 = Color3.fromRGB(255, 255, 255)
-physicalOption.TextScaled = true
-physicalOption.TextSize = 14
-physicalOption.Parent = autostatsFrame
-
-local spellOption = Instance.new("TextButton")
-spellOption.Size = UDim2.new(1, 0, 0, 25)
-spellOption.Position = UDim2.new(0, 0, 0, 25)
-spellOption.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-spellOption.Text = "Spell"
-spellOption.TextColor3 = Color3.fromRGB(255, 255, 255)
-spellOption.TextScaled = true
-spellOption.TextSize = 14
-spellOption.Parent = autostatsFrame
-
-local staminaOption = Instance.new("TextButton")
-staminaOption.Size = UDim2.new(1, 0, 0, 25)
-staminaOption.Position = UDim2.new(0, 0, 0, 50)
-staminaOption.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-staminaOption.Text = "Stamina"
-staminaOption.TextColor3 = Color3.fromRGB(255, 255, 255)
-staminaOption.TextScaled = true
-staminaOption.TextSize = 14
-staminaOption.Parent = autostatsFrame
-
 -- Nút Disable Render
 local disableRenderButton = Instance.new("TextButton")
 disableRenderButton.Size = UDim2.new(0, 110, 0, 25)
-disableRenderButton.Position = UDim2.new(0, 10, 0, 125)
+disableRenderButton.Position = UDim2.new(0, 130, 0, 35)
 disableRenderButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 disableRenderButton.Text = "Disable Render: OFF"
 disableRenderButton.TextScaled = true
@@ -182,7 +133,7 @@ disableRenderButton.Parent = frame
 -- Nút Use Skill
 local useSkillButton = Instance.new("TextButton")
 useSkillButton.Size = UDim2.new(0, 110, 0, 25)
-useSkillButton.Position = UDim2.new(0, 130, 0, 125)
+useSkillButton.Position = UDim2.new(0, 10, 0, 65)
 useSkillButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 useSkillButton.Text = "Use Skill: OFF"
 useSkillButton.TextScaled = true
@@ -190,43 +141,10 @@ useSkillButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 useSkillButton.TextSize = 14
 useSkillButton.Parent = frame
 
--- Nút Auto Dungeon (nút)
-local autoDungeonButton = Instance.new("TextButton")
-autoDungeonButton.Size = UDim2.new(0, 110, 0, 25)
-autoDungeonButton.Position = UDim2.new(0, 10, 0, 155)
-autoDungeonButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-autoDungeonButton.Text = "Auto Dungeon: OFF"
-autoDungeonButton.TextScaled = true
-autoDungeonButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoDungeonButton.TextSize = 14
-autoDungeonButton.Parent = frame
-
--- Nút Gregg Farm
-local greggFarmButton = Instance.new("TextButton")
-greggFarmButton.Size = UDim2.new(0, 110, 0, 25)
-greggFarmButton.Position = UDim2.new(0, 130, 0, 155)
-greggFarmButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-greggFarmButton.Text = "Gregg Farm: OFF"
-greggFarmButton.TextScaled = true
-greggFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-greggFarmButton.TextSize = 14
-greggFarmButton.Parent = frame
-
--- Nút Hold Skills
-local holdSkillsButton = Instance.new("TextButton")
-holdSkillsButton.Size = UDim2.new(0, 110, 0, 25)
-holdSkillsButton.Position = UDim2.new(0, 10, 0, 185)
-holdSkillsButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-holdSkillsButton.Text = "Hold Skills: OFF"
-holdSkillsButton.TextScaled = true
-holdSkillsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-holdSkillsButton.TextSize = 14
-holdSkillsButton.Parent = frame
-
 -- Nút Bonus Boss
 local bonusBossButton = Instance.new("TextButton")
 bonusBossButton.Size = UDim2.new(0, 110, 0, 25)
-bonusBossButton.Position = UDim2.new(0, 130, 0, 185)
+bonusBossButton.Position = UDim2.new(0, 130, 0, 65)
 bonusBossButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 bonusBossButton.Text = "Bonus Boss: OFF"
 bonusBossButton.TextScaled = true
@@ -237,7 +155,7 @@ bonusBossButton.Parent = frame
 -- Discord Webhook Input
 local webhookLabel = Instance.new("TextLabel")
 webhookLabel.Size = UDim2.new(0, 80, 0, 20)
-webhookLabel.Position = UDim2.new(0, 10, 0, 215)
+webhookLabel.Position = UDim2.new(0, 10, 0, 95)
 webhookLabel.BackgroundTransparency = 1
 webhookLabel.Text = "Webhook URL"
 webhookLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -247,7 +165,7 @@ webhookLabel.Parent = frame
 
 local webhookInput = Instance.new("TextBox")
 webhookInput.Size = UDim2.new(0, 200, 0, 25)
-webhookInput.Position = UDim2.new(0, 10, 0, 235)
+webhookInput.Position = UDim2.new(0, 10, 0, 115)
 webhookInput.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 webhookInput.Text = "Enter Discord Webhook URL"
 webhookInput.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -258,7 +176,7 @@ webhookInput.Parent = frame
 -- Nút Save Webhook
 local saveWebhookButton = Instance.new("TextButton")
 saveWebhookButton.Size = UDim2.new(0, 110, 0, 25)
-saveWebhookButton.Position = UDim2.new(0, 10, 0, 265)
+saveWebhookButton.Position = UDim2.new(0, 10, 0, 145)
 saveWebhookButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 saveWebhookButton.Text = "Save Webhook"
 saveWebhookButton.TextScaled = true
@@ -266,20 +184,51 @@ saveWebhookButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 saveWebhookButton.TextSize = 14
 saveWebhookButton.Parent = frame
 
+-- Thông báo "Save Webhook thành công"
+local webhookNotification = Instance.new("TextLabel")
+webhookNotification.Size = UDim2.new(0, 200, 0, 30)
+webhookNotification.Position = UDim2.new(1, -210, 1, -40)
+webhookNotification.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+webhookNotification.Text = "Save Webhook thành công!"
+webhookNotification.TextColor3 = Color3.fromRGB(255, 255, 255)
+webhookNotification.TextScaled = true
+webhookNotification.TextSize = 14
+webhookNotification.Visible = false
+webhookNotification.Parent = gui
+
 -- Biến trạng thái
-local isAutoDungeonSliderOn = false
 local isAutofarmOn = false
-local isAutoclickWeaponOn = false
-local isWavefarmOn = false
-local autostatsMode = "None"
 local isDisableRenderOn = false
 local isUseSkillOn = false
-local isAutoDungeonButtonOn = false
-local isGreggFarmOn = false
-local isHoldSkillsOn = false
 local isBonusBossOn = false
 local webhookUrl = ""
-local collectedItems = 0 -- Đếm số vật phẩm nhặt được
+
+-- Key hợp lệ
+local validKey = "test"
+
+-- Logic kiểm tra key
+keySubmitButton.MouseButton1Click:Connect(function()
+    local enteredKey = keyInput.Text
+    if enteredKey == validKey then
+        keyNotification.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        keyNotification.Text = "Key valid, loading UI"
+        keyNotification.Visible = true
+        wait(3)
+        keyNotification.Visible = false
+        keyFrame.Visible = false
+        logoButton.Visible = true
+        frame.Visible = true
+        print("Key hợp lệ, đã tải UI!")
+    else
+        keyNotification.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        keyNotification.Text = "Key invalid, let retry"
+        keyNotification.Visible = true
+        wait(3)
+        keyNotification.Visible = false
+        keyInput.Text = "Enter key here"
+        print("Key không hợp lệ!")
+    end
+end)
 
 -- Hàm kéo thả
 local function makeDraggable(element)
@@ -311,6 +260,7 @@ end
 
 makeDraggable(frame)
 makeDraggable(logoButton)
+makeDraggable(keyFrame)
 
 -- Logic bật/tắt UI khi bấm logo
 local isUIVisible = false
@@ -324,10 +274,13 @@ logoButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Lưu Webhook URL
+-- Lưu Webhook URL và hiển thị thông báo
 saveWebhookButton.MouseButton1Click:Connect(function()
     webhookUrl = webhookInput.Text
     print("Webhook URL đã được lưu: " .. webhookUrl)
+    webhookNotification.Visible = true
+    wait(3)
+    webhookNotification.Visible = false
 end)
 
 -- Hàm gửi thông báo qua Discord Webhook
@@ -337,14 +290,11 @@ local function sendDiscordNotification()
         return
     end
 
-    -- Lấy thông tin người chơi
     local playerName = player.Name
     local gold = player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Gold") and player.leaderstats.Gold.Value or 0
     local level = player:FindFirstChild("Level") and player.Level.Value or 0
     local xp = player:FindFirstChild("XP") and player.XP.Value or 0
-    local dungeonName = player:FindFirstChild("CurrentDungeon") and player.CurrentDungeon.Value or "Unknown"
 
-    -- Định dạng thông báo
     local message = {
         ["content"] = "",
         ["embeds"] = {{
@@ -354,11 +304,6 @@ local function sendDiscordNotification()
                 {
                     ["name"] = "Player",
                     ["value"] = playerName,
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "Dungeon",
-                    ["value"] = dungeonName,
                     ["inline"] = true
                 },
                 {
@@ -375,11 +320,6 @@ local function sendDiscordNotification()
                     ["name"] = "XP",
                     ["value"] = tostring(xp),
                     ["inline"] = true
-                },
-                {
-                    ["name"] = "Items Collected",
-                    ["value"] = tostring(collectedItems),
-                    ["inline"] = true
                 }
             },
             ["footer"] = {
@@ -388,14 +328,12 @@ local function sendDiscordNotification()
         }}
     }
 
-    -- Gửi thông báo
     local success, err = pcall(function()
         httpService:PostAsync(webhookUrl, httpService:JSONEncode(message), Enum.HttpContentType.ApplicationJson)
     end)
 
     if success then
         print("Đã gửi thông báo đến Discord!")
-        collectedItems = 0 -- Reset số vật phẩm sau khi gửi
     else
         print("Lỗi khi gửi thông báo đến Discord: " .. err)
     end
@@ -416,142 +354,147 @@ end
 
 spawn(detectMatchEnd)
 
--- Tự động nhặt vật phẩm
-local function autoCollectItems()
-    while true do
-        for _, item in pairs(workspace:GetChildren()) do
-            if item:FindFirstChild("ClickDetector") and item.Name:find("Drop") then
-                local distance = (rootPart.Position - item.Position).Magnitude
-                if distance <= 20 then
-                    fireclickdetector(item.ClickDetector)
-                    collectedItems = collectedItems + 1
-                    print("Đã nhặt vật phẩm! Tổng số: " .. collectedItems)
+-- 1. Autofarm (Dịch chuyển lên đầu địch, spam chiêu, và né chiêu của quái)
+local function findNearestEnemy()
+    local nearestEnemy = nil
+    local shortestDistance = math.huge
+    for _, enemy in pairs(workspace:GetChildren()) do
+        local enemyHumanoid = enemy:FindFirstChild("Humanoid")
+        local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
+        if enemyHumanoid and enemyRoot and enemy ~= character and enemyHumanoid.Health > 0 then
+            local distance = (rootPart.Position - enemyRoot.Position).Magnitude
+            if distance < shortestDistance and distance <= 50 then
+                nearestEnemy = enemyRoot
+                shortestDistance = distance
+            end
+        end
+    end
+    return nearestEnemy
+end
+
+-- Hàm kiểm tra xem vị trí có an toàn không (né vùng đỏ và tím)
+local function isSafePosition(position)
+    for _, area in pairs(workspace:GetChildren()) do
+        if area:IsA("BasePart") then
+            local color = area.BrickColor
+            -- Kiểm tra màu đỏ hoặc tím (dựa trên BrickColor hoặc Color3)
+            local isRed = color == BrickColor.new("Really red") or (area.Color and area.Color.R > 0.8 and area.Color.G < 0.2 and area.Color.B < 0.2)
+            local isPurple = color == BrickColor.new("Royal purple") or (area.Color and area.Color.R < 0.5 and area.Color.G < 0.2 and area.Color.B > 0.5)
+            if (isRed or isPurple) then
+                local distance = (position - area.Position).Magnitude
+                local safeDistance = (area.Size.Magnitude / 2) + 5 -- Khoảng cách an toàn
+                if distance < safeDistance then
+                    return false
                 end
             end
         end
-        wait(0.5)
     end
+    return true
 end
 
-spawn(autoCollectItems)
-
--- 1. Auto Dungeon (Thanh trượt)
-local function autoDungeonLogic()
-    if not isAutoDungeonSliderOn then return end
-    local playerLevel = player:FindFirstChild("Level") and player.Level.Value or 1
-    local dungeonName, difficulty
-
-    -- Chọn dungeon dựa trên level
-    if playerLevel >= 215 then
-        dungeonName = "Abyssal Void"
-        difficulty = "Nightmare"
-    elseif playerLevel >= 27 then
-        dungeonName = "Winter Outpost"
-        difficulty = "Nightmare"
-    elseif playerLevel >= 15 then
-        dungeonName = "Desert Temple"
-        difficulty = "Hard"
-    elseif playerLevel >= 5 then
-        dungeonName = "Desert Temple"
-        difficulty = "Medium"
-    else
-        dungeonName = "Desert Temple"
-        difficulty = "Easy"
-    end
-
-    local dungeonEvent = replicatedStorage:FindFirstChild("DungeonJoin")
-    if dungeonEvent then
-        -- Kiểm tra xem có đang trong dungeon không
-        if not player:FindFirstChild("InDungeon") or not player.InDungeon.Value then
-            dungeonEvent:FireServer(dungeonName, difficulty)
-            print("Đã tự động vào " .. dungeonName .. " (" .. difficulty .. ")!")
-            wait(15) -- Chờ 15 giây để tránh spam
+-- Hàm tìm vị trí an toàn để né
+local function findSafePosition()
+    local basePos = rootPart.Position
+    for i = 1, 15 do
+        local testPos = basePos + Vector3.new(math.random(-30, 30), 0, math.random(-30, 30))
+        if isSafePosition(testPos) then
+            return testPos
         end
-    else
-        print("Không tìm thấy RemoteEvent để vào hầm ngục!")
     end
+    -- Nếu không tìm được vị trí an toàn, nhảy lên cao
+    return basePos + Vector3.new(0, 10, 0)
 end
 
-autoDungeonSlider.MouseButton1Click:Connect(function()
-    isAutoDungeonSliderOn = not isAutoDungeonSliderOn
-    autoDungeonSlider.Text = isAutoDungeonSliderOn and "ON" or "OFF"
-    autoDungeonSlider.BackgroundColor3 = isAutoDungeonSliderOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 120, 255)
-    if isAutoDungeonSliderOn then
-        spawn(autoDungeonLogic)
-        print("Đã bật Auto Dungeon (thanh trượt)!")
-    else
-        print("Đã tắt Auto Dungeon (thanh trượt)!")
-    end
-end)
+local function autofarmLogic()
+    while isAutofarmOn do
+        if humanoid.Health <= 0 then
+            wait(1)
+            character = player.Character or player.CharacterAdded:Wait()
+            humanoid = character:WaitForChild("Humanoid")
+            rootPart = character:WaitForChild("HumanoidRootPart")
+        end
 
--- 2. Autostats (Lựa chọn)
-local function autostatsLogic()
-    while autostatsMode ~= "None" do
-        local statsEvent = replicatedStorage:FindFirstChild("UpgradeStat")
-        if statsEvent then
-            statsEvent:FireServer(autostatsMode)
-            print("Đã nâng " .. autostatsMode .. "!")
+        local target = findNearestEnemy()
+        if target then
+            -- Kiểm tra và né vùng nguy hiểm (màu đỏ hoặc tím)
+            if not isSafePosition(rootPart.Position) then
+                local safePos = findSafePosition()
+                rootPart.CFrame = CFrame.new(safePos)
+                print("Đã né vùng nguy hiểm (màu đỏ/tím)!")
+                wait(0.1)
+            end
+
+            -- Dịch chuyển lên đầu địch
+            rootPart.CFrame = target.CFrame * CFrame.new(0, 5, 0)
+            print("Đã dịch chuyển lên đầu địch!")
+
+            -- Tự động tấn công
+            virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            wait(0.01)
+            virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
         else
-            print("Không tìm thấy RemoteEvent để nâng stats!")
+            wait(0.2)
         end
-        wait(0.5)
+        runService.Heartbeat:Wait()
     end
 end
 
-autostatsButton.MouseButton1Click:Connect(function()
-    autostatsFrame.Visible = not autostatsFrame.Visible
+autofarmButton.MouseButton1Click:Connect(function()
+    isAutofarmOn = not isAutofarmOn
+    autofarmButton.Text = "Autofarm: " .. (isAutofarmOn and "ON" or "OFF")
+    if isAutofarmOn then
+        spawn(autofarmLogic)
+        print("Đã bật Autofarm!")
+    else
+        print("Đã tắt Autofarm!")
+    end
 end)
 
-physicalOption.MouseButton1Click:Connect(function()
-    autostatsMode = "Physical"
-    autostatsButton.Text = "Autostats: Physical"
-    autostatsFrame.Visible = false
-    print("Đã chọn Autostats: Physical")
-    spawn(autostatsLogic)
-end)
+-- 2. Disable Render (Đen hết màn hình và quay lại bình thường)
+local originalLighting = {
+    Brightness = game.Lighting.Brightness,
+    Ambient = game.Lighting.Ambient,
+    GlobalShadows = game.Lighting.GlobalShadows
+}
 
-spellOption.MouseButton1Click:Connect(function()
-    autostatsMode = "Spell"
-    autostatsButton.Text = "Autostats: Spell"
-    autostatsFrame.Visible = false
-    print("Đã chọn Autostats: Spell")
-    spawn(autostatsLogic)
-end)
+local originalParts = {}
+local function storeOriginalParts()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+            originalParts[v] = v.Transparency
+        end
+    end
+end
 
-staminaOption.MouseButton1Click:Connect(function()
-    autostatsMode = "Stamina"
-    autostatsButton.Text = "Autostats: Stamina"
-    autostatsFrame.Visible = false
-    print("Đã chọn Autostats: Stamina")
-    spawn(autostatsLogic)
-end)
+storeOriginalParts()
 
--- 3. Disable Render
 disableRenderButton.MouseButton1Click:Connect(function()
     isDisableRenderOn = not isDisableRenderOn
     disableRenderButton.Text = "Disable Render: " .. (isDisableRenderOn and "ON" or "OFF")
     if isDisableRenderOn then
         game.Lighting.Brightness = 0
         game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+        game.Lighting.GlobalShadows = false
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
                 v.Transparency = 1
             end
         end
-        print("Đã tắt render để giảm lag!")
+        print("Đã tắt render, màn hình đen hoàn toàn!")
     else
-        game.Lighting.Brightness = 1
-        game.Lighting.Ambient = Color3.fromRGB(127, 127, 127)
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
-                v.Transparency = 0
+        game.Lighting.Brightness = originalLighting.Brightness
+        game.Lighting.Ambient = originalLighting.Ambient
+        game.Lighting.GlobalShadows = originalLighting.GlobalShadows
+        for part, transparency in pairs(originalParts) do
+            if part and part.Parent then
+                part.Transparency = transparency
             end
         end
-        print("Đã bật lại render!")
+        print("Đã bật lại render, màn hình trở lại bình thường!")
     end
 end)
 
--- 4. Use Skill (Spam tất cả skill, bypass cooldown với Krnl)
+-- 3. Use Skill (Bypass cooldown thật và spam liên tục)
 local function bypassCooldown()
     local mt = getrawmetatable(game)
     local oldIndex = mt.__index
@@ -574,7 +517,6 @@ local function bypassCooldown()
                 for key, value in pairs(v) do
                     if (key:lower():find("cooldown") or key:lower():find("skill")) and type(value) == "number" then
                         rawset(v, key, 0)
-                        print("Đã đặt " .. key .. " về 0!")
                     end
                 end
             end
@@ -596,7 +538,6 @@ local function bypassCooldown()
                         hookfunction(func, function(...)
                             return true
                         end)
-                        print("Đã hook hàm kiểm tra cooldown!")
                         break
                     end
                 end
@@ -604,7 +545,9 @@ local function bypassCooldown()
         end
     end)
 
-    if not successHook then
+    if successHook then
+        print("Đã hook hàm kiểm tra cooldown!")
+    else
         print("Lỗi khi hook hàm cooldown: " .. errHook)
     end
 end
@@ -612,6 +555,14 @@ end
 local function useSkill()
     bypassCooldown()
     while isUseSkillOn do
+        local target = findNearestEnemy()
+        if target then
+            -- Dịch chuyển lên đầu địch
+            rootPart.CFrame = target.CFrame * CFrame.new(0, 5, 0)
+            print("Đã dịch chuyển lên đầu địch trong Use Skill!")
+        end
+
+        -- Spam skill liên tục
         local skillKeys = {"Q", "E", "One", "Two", "Three", "Four"}
         for _, key in pairs(skillKeys) do
             virtualInputManager:SendKeyEvent(true, key, false, game)
@@ -630,67 +581,10 @@ useSkillButton.MouseButton1Click:Connect(function()
         print("Đang spam tất cả skill với cooldown bypass!")
     else
         print("Đã tắt Use Skill!")
-    end
+ end
 end)
 
--- 5. Gregg Farm
-local function greggFarmLogic()
-    while isGreggFarmOn do
-        local gregg = nil
-        for _, enemy in pairs(workspace:GetChildren()) do
-            if enemy.Name == "Gregg" and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-                gregg = enemy
-                break
-            end
-        end
-        if gregg then
-            rootPart.CFrame = gregg.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-            print("Đang farm Gregg!")
-            virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            wait(0.01)
-            virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        end
-        runService.Heartbeat:Wait()
-    end
-end
-
-greggFarmButton.MouseButton1Click:Connect(function()
-    isGreggFarmOn = not isGreggFarmOn
-    greggFarmButton.Text = "Gregg Farm: " .. (isGreggFarmOn and "ON" or "OFF")
-    if isGreggFarmOn then
-        spawn(greggFarmLogic)
-        print("Đã bật Gregg Farm!")
-    else
-        print("Đã tắt Gregg Farm!")
-    end
-end)
-
--- 6. Hold Skills
-local function holdSkills()
-    while isHoldSkillsOn do
-        local skillKeys = {"Q", "E", "One", "Two", "Three", "Four"}
-        for _, key in pairs(skillKeys) do
-            virtualInputManager:SendKeyEvent(true, key, false, game)
-        end
-        runService.Heartbeat:Wait()
-    end
-    for _, key in pairs({"Q", "E", "One", "Two", "Three", "Four"}) do
-        virtualInputManager:SendKeyEvent(false, key, false, game)
-    end
-end
-
-holdSkillsButton.MouseButton1Click:Connect(function()
-    isHoldSkillsOn = not isHoldSkillsOn
-    holdSkillsButton.Text = "Hold Skills: " .. (isHoldSkillsOn and "ON" or "OFF")
-    if isHoldSkillsOn then
-        spawn(holdSkills)
-        print("Đã bật Hold Skills!")
-    else
-        print("Đã tắt Hold Skills!")
-    end
-end)
-
--- 7. Bonus Boss
+-- 4. Bonus Boss
 local function bonusBossLogic()
     while isBonusBossOn do
         for _, obj in pairs(workspace:GetChildren()) do
@@ -716,7 +610,7 @@ bonusBossButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- 8. Auto Retry
+-- 5. Tự động Retry khi hết ván
 local function autoRetry()
     while true do
         local retryButton = player.PlayerGui:FindFirstChild("RetryButton")
@@ -730,216 +624,6 @@ local function autoRetry()
 end
 
 spawn(autoRetry)
-
--- 9. Reset (Reset nhân vật)
-resetButton.MouseButton1Click:Connect(function()
-    humanoid.WalkSpeed = 0
-    humanoid.JumpPower = 0
-    humanoid:TakeDamage(humanoid.MaxHealth)
-    print("Đã reset nhân vật!")
-    wait(1)
-    character = player.Character or player.CharacterAdded:Wait()
-    humanoid = character:WaitForChild("Humanoid")
-    rootPart = character:WaitForChild("HumanoidRootPart")
-end)
-
--- 10. Autofarm (Tối ưu hóa)
-local function findNearestEnemy()
-    local nearestEnemy = nil
-    local shortestDistance = math.huge
-    for _, enemy in pairs(workspace:GetChildren()) do
-        local enemyHumanoid = enemy:FindFirstChild("Humanoid")
-        local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
-        if enemyHumanoid and enemyRoot and enemy ~= character and enemyHumanoid.Health > 0 then
-            local distance = (rootPart.Position - enemyRoot.Position).Magnitude
-            if distance < shortestDistance and distance <= 50 then
-                nearestEnemy = enemyRoot
-                shortestDistance = distance
-            end
-        end
-    end
-    return nearestEnemy
-end
-
-local function isSafePosition(position)
-    for _, area in pairs(workspace:GetChildren()) do
-        if area.Name == "DangerArea" and area:IsA("BasePart") then
-            local distance = (position - area.Position).Magnitude
-            if distance < (area.Size.Magnitude + 5) then
-                return false
-            end
-        end
-    end
-    return true
-end
-
-local function findSafePosition()
-    local basePos = rootPart.Position
-    for i = 1, 15 do
-        local testPos = basePos + Vector3.new(math.random(-30, 30), 0, math.random(-30, 30))
-        if isSafePosition(testPos) then
-            return testPos
-        end
-    end
-    return basePos + Vector3.new(0, 10, 0)
-end
-
-local function autofarmLogic()
-    while isAutofarmOn do
-        if humanoid.Health <= 0 then
-            wait(1)
-            character = player.Character or player.CharacterAdded:Wait()
-            humanoid = character:WaitForChild("Humanoid")
-            rootPart = character:WaitForChild("HumanoidRootPart")
-        end
-
-        local target = findNearestEnemy()
-        if target then
-            if not isSafePosition(rootPart.Position) then
-                local safePos = findSafePosition()
-                rootPart.CFrame = CFrame.new(safePos)
-                print("Đã né vùng nguy hiểm!")
-                wait(0.1)
-            end
-
-            rootPart.CFrame = target.CFrame * CFrame.new(0, 5, 0)
-            if isUseSkillOn then
-                local skillKeys = {"Q", "E", "One", "Two", "Three", "Four"}
-                for _, key in pairs(skillKeys) do
-                    virtualInputManager:SendKeyEvent(true, key, false, game)
-                    wait(0.01)
-                    virtualInputManager:SendKeyEvent(false, key, false, game)
-                end
-            end
-            virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            wait(0.01)
-            virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        else
-            local randomPos = rootPart.Position + Vector3.new(math.random(-20, 20), 0, math.random(-20, 20))
-            if isSafePosition(randomPos) then
-                rootPart.CFrame = CFrame.new(randomPos)
-            end
-            wait(0.2)
-        end
-        runService.Heartbeat:Wait()
-    end
-end
-
-autofarmButton.MouseButton1Click:Connect(function()
-    isAutofarmOn = not isAutofarmOn
-    autofarmButton.Text = "Autofarm: " .. (isAutofarmOn and "ON" or "OFF")
-    if isAutofarmOn then
-        spawn(autofarmLogic)
-        print("Đã bật Autofarm!")
-    else
-        print("Đã tắt Autofarm!")
-    end
-end)
-
--- 11. Autoclick Weapon
-local function autoclickWeaponLogic()
-    while isAutoclickWeaponOn do
-        virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        wait(0.01)
-        virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        runService.Heartbeat:Wait()
-    end
-end
-
-autoclickWeaponButton.MouseButton1Click:Connect(function()
-    isAutoclickWeaponOn = not isAutoclickWeaponOn
-    autoclickWeaponButton.Text = "Autoclick Weapon: " .. (isAutoclickWeaponOn and "ON" or "OFF")
-    if isAutoclickWeaponOn then
-        spawn(autoclickWeaponLogic)
-        print("Đã bật Autoclick Weapon!")
-    else
-        print("Đã tắt Autoclick Weapon!")
-    end
-end)
-
--- 12. Wavefarm
-local function wavefarmLogic()
-    while isWavefarmOn do
-        local wave = nil
-        for _, obj in pairs(workspace:GetChildren()) do
-            if obj.Name == "Wave" and obj:IsA("BasePart") then
-                wave = obj
-                break
-            end
-        end
-        if wave then
-            rootPart.CFrame = wave.CFrame * CFrame.new(0, 5, 0)
-            print("Đang farm tại Wave!")
-            virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            wait(0.01)
-            virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        else
-            print("Không tìm thấy Wave để farm!")
-            wait(0.5)
-        end
-        runService.Heartbeat:Wait()
-    end
-end
-
-wavefarmButton.MouseButton1Click:Connect(function()
-    isWavefarmOn = not isWavefarmOn
-    wavefarmButton.Text = "Wavefarm: " .. (isWavefarmOn and "ON" or "OFF")
-    if isWavefarmOn then
-        spawn(wavefarmLogic)
-        print("Đã bật Wavefarm!")
-    else
-        print("Đã tắt Wavefarm!")
-    end
-end)
-
--- 13. Auto Dungeon (Nút)
-local function autoDungeonButtonLogic()
-    while isAutoDungeonButtonOn do
-        local playerLevel = player:FindFirstChild("Level") and player.Level.Value or 1
-        local dungeonName, difficulty
-
-        if playerLevel >= 215 then
-            dungeonName = "Abyssal Void"
-            difficulty = "Nightmare"
-        elseif playerLevel >= 27 then
-            dungeonName = "Winter Outpost"
-            difficulty = "Nightmare"
-        elseif playerLevel >= 15 then
-            dungeonName = "Desert Temple"
-            difficulty = "Hard"
-        elseif playerLevel >= 5 then
-            dungeonName = "Desert Temple"
-            difficulty = "Medium"
-        else
-            dungeonName = "Desert Temple"
-            difficulty = "Easy"
-        end
-
-        local dungeonEvent = replicatedStorage:FindFirstChild("DungeonJoin")
-        if dungeonEvent then
-            if not player:FindFirstChild("InDungeon") or not player.InDungeon.Value then
-                dungeonEvent:FireServer(dungeonName, difficulty)
-                print("Đã tự động vào " .. dungeonName .. " (" .. difficulty .. ") qua nút!")
-                wait(15)
-            end
-        else
-            print("Không tìm thấy RemoteEvent để vào hầm ngục!")
-            wait(5)
-        end
-        wait(1)
-    end
-end
-
-autoDungeonButton.MouseButton1Click:Connect(function()
-    isAutoDungeonButtonOn = not isAutoDungeonButtonOn
-    autoDungeonButton.Text = "Auto Dungeon: " .. (isAutoDungeonButtonOn and "ON" or "OFF")
-    if isAutoDungeonButtonOn then
-        spawn(autoDungeonButtonLogic)
-        print("Đã bật Auto Dungeon (nút)!")
-    else
-        print("Đã tắt Auto Dungeon (nút)!")
-    end
-end)
 
 -- Thông báo khi script khởi động
 print("Kinayo Script đã được khởi động thành công!")
